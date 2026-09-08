@@ -133,8 +133,13 @@ Include:
       },
     };
 
-    // Attempt generation with gemini-2.5-flash, fallback to gemini-1.5-flash
-    const models = ["gemini-2.5-flash", "gemini-1.5-flash"];
+    // Attempt generation with latest available Google Gemini models
+    const models = [
+      "gemini-3.5-flash-lite",
+      "gemini-3.6-flash",
+      "gemini-2.5-flash",
+      "gemini-1.5-flash",
+    ];
     let lastError = null;
     let responseText = null;
 
