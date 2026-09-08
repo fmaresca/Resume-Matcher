@@ -149,7 +149,11 @@ const elements = {
   outputLoading: document.getElementById("output-loading"),
   loadingStatusText: document.getElementById("loading-status-text"),
   copyBtn: document.getElementById("copy-btn"),
-  downloadBtn: document.getElementById("download-btn"),
+  downloadMenuBtn: document.getElementById("download-menu-btn"),
+  downloadMenu: document.getElementById("download-menu"),
+  downloadWordBtn: document.getElementById("download-word-btn"),
+  downloadPdfBtn: document.getElementById("download-pdf-btn"),
+  downloadMdBtn: document.getElementById("download-md-btn"),
   // Quick Sample Buttons
   sampleResumeBtn: document.getElementById("btn-sample-resume"),
   sampleJdPrBtn: document.getElementById("btn-sample-jd-pr"),
@@ -364,17 +368,46 @@ function setupEventListeners() {
     showToast("Copied to clipboard!");
   });
 
-  // Download Output
-  elements.downloadBtn?.addEventListener("click", () => {
-    const currentText = state.generatedOutputs[state.activeTab];
-    if (!currentText) {
-      showToast("No content to download.", "warning");
-      return;
+  // Download Menu Dropdown Toggle
+  elements.downloadMenuBtn?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const isHidden = elements.downloadMenu?.classList.contains("hidden");
+    if (isHidden) {
+      elements.downloadMenu?.classList.remove("hidden");
+      elements.downloadMenuBtn?.setAttribute("aria-expanded", "true");
+    } else {
+      elements.downloadMenu?.classList.add("hidden");
+      elements.downloadMenuBtn?.setAttribute("aria-expanded", "false");
     }
-    const profile = getProfile(state.selectedProfileId);
-    const filename = `${profile.id}_${state.activeTab}.md`;
-    downloadTextFile(filename, currentText);
-    showToast(`Downloaded ${filename}`);
+  });
+
+  // Close dropdown on click outside
+  document.addEventListener("click", (e) => {
+    if (!elements.downloadMenu?.contains(e.target) && e.target !== elements.downloadMenuBtn) {
+      elements.downloadMenu?.classList.add("hidden");
+      elements.downloadMenuBtn?.setAttribute("aria-expanded", "false");
+    }
+  });
+
+  // Download Word Document (.doc / .docx)
+  elements.downloadWordBtn?.addEventListener("click", () => {
+    elements.downloadMenu?.classList.add("hidden");
+    elements.downloadMenuBtn?.setAttribute("aria-expanded", "false");
+    handleDownload("word");
+  });
+
+  // Download PDF Document (.pdf)
+  elements.downloadPdfBtn?.addEventListener("click", () => {
+    elements.downloadMenu?.classList.add("hidden");
+    elements.downloadMenuBtn?.setAttribute("aria-expanded", "false");
+    handleDownload("pdf");
+  });
+
+  // Download Markdown File (.md)
+  elements.downloadMdBtn?.addEventListener("click", () => {
+    elements.downloadMenu?.classList.add("hidden");
+    elements.downloadMenuBtn?.setAttribute("aria-expanded", "false");
+    handleDownload("markdown");
   });
 
   // API Key Modal
@@ -710,6 +743,35 @@ function showToast(message, type = "success") {
   }, 4000);
 }
 
+function handleDownload(format = "markdown") {
+  const currentText = state.generatedOutputs[state.activeTab];
+  if (!currentText) {
+    showToast("Please generate or select a document first.", "warning");
+    return;
+  }
+
+  const profile = getProfile(state.selectedProfileId);
+  const baseName = `${profile.id}_${state.activeTab}`;
+  const docTitle = `${profile.name} - ${formatTabTitle(state.activeTab)}`;
+
+  if (format === "word") {
+    downloadWordDoc(`${baseName}.doc`, currentText, docTitle);
+    showToast(`Downloaded Word document (${baseName}.doc)`);
+  } else if (format === "pdf") {
+    downloadPdfDoc(`${baseName}.pdf`, currentText, docTitle);
+  } else {
+    downloadTextFile(`${baseName}.md`, currentText);
+    showToast(`Downloaded Markdown file (${baseName}.md)`);
+  }
+}
+
+function formatTabTitle(tab) {
+  if (tab === "bullets") return "Tailored Summary & STAR Bullets";
+  if (tab === "cover_letter") return "AP-Style Strategic Cover Letter";
+  if (tab === "gap_analysis") return "ATS Gap Analysis & Interview Positioning";
+  return "Tailored Document";
+}
+
 function downloadTextFile(filename, text) {
   const blob = new Blob([text], { type: "text/markdown;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
@@ -721,4 +783,211 @@ function downloadTextFile(filename, text) {
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+}
+
+function downloadWordDoc(filename, markdownText, docTitle) {
+  const parsedHtml = window.marked && typeof window.marked.parse === "function"
+    ? window.marked.parse(markdownText)
+    : markdownText.replace(/\n\n/g, "<p>").replace(/\n/g, "<br>");
+
+  const wordDocumentHtml = `<!DOCTYPE html>
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+<meta charset='utf-8'>
+<title>${docTitle}</title>
+<!--[if gte mso 9]>
+<xml>
+  <w:WordDocument>
+    <w:View>Print</w:View>
+    <w:Zoom>100</w:Zoom>
+    <w:DoNotOptimizeForBrowser/>
+  </w:WordDocument>
+</xml>
+<![endif]-->
+<style>
+  @page {
+    size: 8.5in 11in;
+    margin: 1in;
+  }
+  body {
+    font-family: 'Calibri', 'Segoe UI', Arial, sans-serif;
+    font-size: 11pt;
+    line-height: 1.45;
+    color: #111827;
+  }
+  h1 {
+    font-size: 17pt;
+    font-weight: bold;
+    color: #312e81;
+    border-bottom: 2pt solid #4f46e5;
+    padding-bottom: 4pt;
+    margin-top: 0;
+    margin-bottom: 6pt;
+  }
+  h2 {
+    font-size: 14pt;
+    font-weight: bold;
+    color: #1e1b4b;
+    margin-top: 14pt;
+    margin-bottom: 6pt;
+  }
+  h3 {
+    font-size: 12pt;
+    font-weight: bold;
+    color: #4338ca;
+    margin-top: 12pt;
+    margin-bottom: 4pt;
+    border-bottom: 0.5pt solid #e2e8f0;
+    padding-bottom: 2pt;
+  }
+  p {
+    margin-top: 0;
+    margin-bottom: 8pt;
+    text-align: justify;
+  }
+  ul, ol {
+    margin-top: 4pt;
+    margin-bottom: 10pt;
+    padding-left: 20pt;
+  }
+  li {
+    margin-bottom: 4pt;
+  }
+  strong, b {
+    font-weight: bold;
+    color: #000000;
+  }
+  .doc-header {
+    margin-bottom: 16pt;
+  }
+  .doc-subtitle {
+    font-size: 9.5pt;
+    color: #64748b;
+    margin-top: 2pt;
+    margin-bottom: 14pt;
+  }
+</style>
+</head>
+<body>
+  <div class="doc-header">
+    <h1>${docTitle}</h1>
+    <p class="doc-subtitle">Tailored via ResumeWatcher • Serverless ATS Optimization Suite</p>
+  </div>
+  ${parsedHtml}
+</body>
+</html>`;
+
+  const blob = new Blob(['\ufeff', wordDocumentHtml], {
+    type: 'application/msword;charset=utf-8;'
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", filename);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function downloadPdfDoc(filename, markdownText, docTitle) {
+  const parsedHtml = window.marked && typeof window.marked.parse === "function"
+    ? window.marked.parse(markdownText)
+    : markdownText.replace(/\n\n/g, "<p>").replace(/\n/g, "<br>");
+
+  const container = document.createElement("div");
+  container.className = "pdf-export-container";
+  container.style.padding = "24px 32px";
+  container.style.fontFamily = "'Inter', Arial, sans-serif";
+  container.style.color = "#0f172a";
+  container.style.backgroundColor = "#ffffff";
+  container.style.lineHeight = "1.55";
+  container.style.fontSize = "11pt";
+  container.innerHTML = `
+    <div style="border-bottom: 2px solid #4f46e5; padding-bottom: 10px; margin-bottom: 18px;">
+      <h1 style="font-size: 18pt; font-weight: 700; color: #1e1b4b; margin: 0 0 4px 0;">${docTitle}</h1>
+      <div style="font-size: 9pt; color: #64748b;">Tailored via ResumeWatcher • Serverless ATS Optimization Suite</div>
+    </div>
+    <div class="pdf-body" style="color: #1e293b;">
+      ${parsedHtml}
+    </div>
+  `;
+
+  // Style typography inside pdf container
+  const headings = container.querySelectorAll("h1, h2, h3");
+  headings.forEach((h) => {
+    h.style.color = "#312e81";
+    h.style.marginTop = "14px";
+    h.style.marginBottom = "6px";
+    h.style.fontWeight = "700";
+    if (h.tagName === "H3") {
+      h.style.fontSize = "13pt";
+      h.style.borderBottom = "1px solid #e2e8f0";
+      h.style.paddingBottom = "3px";
+    }
+  });
+
+  const paras = container.querySelectorAll("p");
+  paras.forEach((p) => {
+    p.style.marginBottom = "8px";
+  });
+
+  const lists = container.querySelectorAll("ul, ol");
+  lists.forEach((l) => {
+    l.style.marginBottom = "10px";
+    l.style.paddingLeft = "20px";
+  });
+
+  const listItems = container.querySelectorAll("li");
+  listItems.forEach((li) => {
+    li.style.marginBottom = "4px";
+  });
+
+  showToast(`Generating PDF (${filename})...`, "info");
+
+  if (window.html2pdf) {
+    const opt = {
+      margin: [12, 12, 12, 12],
+      filename: filename,
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, logging: false },
+      jsPDF: { unit: "mm", format: "letter", orientation: "portrait" },
+      pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+    };
+    window.html2pdf().set(opt).from(container).save().then(() => {
+      showToast(`Downloaded PDF document (${filename})`);
+    }).catch((err) => {
+      showToast("Direct PDF download fallback opened in print window.", "warning");
+      openPrintFallback(container, docTitle);
+    });
+  } else {
+    openPrintFallback(container, docTitle);
+  }
+}
+
+function openPrintFallback(container, title) {
+  const printWindow = window.open("", "_blank");
+  if (printWindow) {
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>${title}</title>
+        <style>
+          body { font-family: 'Calibri', Arial, sans-serif; margin: 1in; color: #111; line-height: 1.5; }
+          h1, h2, h3 { color: #1e1b4b; }
+          @media print { body { margin: 0; } }
+        </style>
+      </head>
+      <body>
+        ${container.innerHTML}
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+    }, 500);
+  }
 }
