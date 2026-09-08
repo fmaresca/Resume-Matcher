@@ -1,0 +1,13 @@
+{
+  "name": "resumewatcher",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Serverless ATS Resume & Cover Letter Suite for Cloudflare Pages",
+  "scripts": {
+    "dev": "wrangler pages dev public",
+    "deploy": "wrangler pages deploy public"
+  },
+  "devDependencies": {
+    "wrangler": "^4.129.1"
+  }
+}

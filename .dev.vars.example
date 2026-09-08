@@ -1,0 +1,5 @@
+# Local Cloudflare Pages Development Variables
+# Rename this file to .dev.vars to test locally with your Google Gemini API key:
+# AI_API_KEY=your_gemini_api_key_here
+# GEMINI_API_KEY=your_gemini_api_key_here
+AI_API_KEY=

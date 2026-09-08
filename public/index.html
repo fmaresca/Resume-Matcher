@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ResumeWatcher | Serverless ATS Resume & Cover Letter Suite</title>
+  <meta name="description" content="Free-tier Cloudflare Pages serverless application for tailoring resumes and cover letters with Google Gemini AI. Pre-built profiles for PR & Crisis, Wellness Directors, and B2B/B2C Sales." />
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- External Document Parsers & Markdown CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    // Configure worker for PDF.js
+    if (window.pdfjsLib) {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body class="bg-slate-950 text-slate-100 flex flex-col min-h-screen selection:bg-indigo-500 selection:text-white">
+
+  <!-- Header Navigation -->
+  <header class="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-emerald-400 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-heading font-bold text-lg text-white tracking-tight">ResumeWatcher</h1>
+            <span class="px-2 py-0.5 text-[10px] uppercase font-semibold tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full">Edge AI</span>
+          </div>
+          <p class="text-xs text-slate-400 hidden sm:block">Serverless ATS Optimization & Targeted Document Suite</p>
+        </div>
+      </div>
+
+      <!-- Right Header Actions -->
+      <div class="flex items-center gap-3">
+        <!-- API Key Status / Config Trigger -->
+        <button id="api-key-btn" type="button" class="group flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/80 hover:bg-slate-800 hover:border-slate-600 transition text-xs">
+          <div id="api-key-status-badge">
+            <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
+            <span>API Settings</span>
+          </div>
+          <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-white transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+          </svg>
+        </button>
+
+        <!-- GitHub Fork Link -->
+        <a href="https://github.com/fmaresca/Resume-Matcher" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-slate-800 transition">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+          </svg>
+          <span class="hidden sm:inline">GitHub</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Grid Workspace -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- LEFT COLUMN: Inputs & Role Profiles (5 cols on lg) -->
+      <div class="lg:col-span-5 flex flex-col gap-6">
+
+        <!-- 1. Master Resume Input Card -->
+        <section class="glass-panel rounded-2xl p-5">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <span class="w-6 h-6 rounded-lg bg-indigo-500/20 text-indigo-400 font-semibold text-xs flex items-center justify-center">1</span>
+              <h2 class="font-heading font-semibold text-white text-sm">Master Resume</h2>
+            </div>
+            <button id="btn-sample-resume" type="button" class="text-xs text-indigo-400 hover:text-indigo-300 font-medium hover:underline transition">
+              Load Sample Resume
+            </button>
+          </div>
+
+          <!-- Drag & Drop / File Upload Area -->
+          <div id="file-upload-area" class="border-2 border-dashed border-slate-700/80 hover:border-indigo-500/70 rounded-xl p-4 text-center cursor-pointer transition bg-slate-900/40 mb-3 group">
+            <input id="file-input" type="file" accept=".pdf,.docx,.txt,.md" class="hidden" />
+            <div class="flex flex-col items-center justify-center gap-1.5 py-1">
+              <svg class="w-7 h-7 text-slate-400 group-hover:text-indigo-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+              </svg>
+              <p class="text-xs font-medium text-slate-300">
+                <span class="text-indigo-400 underline underline-offset-2">Click to upload</span> or drag and drop
+              </p>
+              <p class="text-[11px] text-slate-500">PDF, Word (.docx), or Text (.txt)</p>
+            </div>
+          </div>
+
+          <!-- Attached File Badge -->
+          <div id="file-name-badge" class="hidden items-center justify-between px-3 py-1.5 mb-3 rounded-lg bg-slate-800/80 border border-slate-700 text-xs text-slate-300">
+            <span class="flex items-center gap-2 truncate">
+              <svg class="w-4 h-4 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span id="file-name-text" class="truncate font-mono">resume.pdf</span>
+            </span>
+            <button id="clear-file-btn" type="button" class="text-slate-400 hover:text-rose-400 transition ml-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Resume Direct Textarea -->
+          <textarea id="resume-input" rows="5" class="w-full bg-slate-900/90 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono resize-y" placeholder="Or paste your raw master resume text here..."></textarea>
+        </section>
+
+        <!-- 2. Target Profile Selector Card -->
+        <section class="glass-panel rounded-2xl p-5">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <span class="w-6 h-6 rounded-lg bg-indigo-500/20 text-indigo-400 font-semibold text-xs flex items-center justify-center">2</span>
+              <h2 class="font-heading font-semibold text-white text-sm">Target Persona / Track</h2>
+            </div>
+            <span id="profile-category" class="px-2 py-0.5 text-[10px] rounded bg-slate-800 text-indigo-300 border border-slate-700 font-medium">Public Relations</span>
+          </div>
+
+          <div class="space-y-3">
+            <select id="profile-select" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl p-2.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+              <optgroup label="Public Relations & Communications">
+                <option value="crisis_management" selected>Crisis Communications & Issues Management</option>
+                <option value="media_relations">Media Relations & Earned Media</option>
+                <option value="corporate_stakeholder">Corporate PR & Stakeholder Engagement</option>
+              </optgroup>
+              <optgroup label="Clinical & Healthcare">
+                <option value="wellness_clinical_director">Wellness Clinical Director</option>
+              </optgroup>
+              <optgroup label="Sales & Growth">
+                <option value="b2c_b2b_sales">B2C & B2B Sales Associate / Executive</option>
+              </optgroup>
+              <optgroup label="Custom Profile">
+                <option value="custom">★ Custom Target Profile (User Defined)</option>
+              </optgroup>
+            </select>
+
+            <p id="profile-description" class="text-xs text-slate-400 leading-relaxed italic bg-slate-900/40 p-2.5 rounded-lg border border-slate-800/60"></p>
+
+            <!-- Custom Profile Builder (Expandable if custom selected) -->
+            <div id="custom-profile-section" class="hidden space-y-3 pt-2 border-t border-slate-800/80">
+              <div>
+                <label class="block text-[11px] font-medium text-slate-400 mb-1">Profile Name</label>
+                <input id="custom-name" type="text" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-indigo-500" placeholder="e.g. Senior Product Manager" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-medium text-slate-400 mb-1">Core Competencies (Comma-separated)</label>
+                <textarea id="custom-competencies" rows="2" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-indigo-500" placeholder="Roadmap Execution, Agile, Data Analytics..."></textarea>
+              </div>
+              <div>
+                <label class="block text-[11px] font-medium text-slate-400 mb-1">Target Action Verbs (Comma-separated)</label>
+                <input id="custom-verbs" type="text" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-indigo-500" placeholder="Spearheaded, Delivered, Engineered..." />
+              </div>
+              <div>
+                <label class="block text-[11px] font-medium text-slate-400 mb-1">Tone & Strategic Focus</label>
+                <input id="custom-emphasis" type="text" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-indigo-500" placeholder="Focus on customer acquisition, speed to market..." />
+              </div>
+              <button id="save-custom-profile-btn" type="button" class="w-full py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition shadow">
+                Save Custom Profile
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. Target Job Description Card -->
+        <section class="glass-panel rounded-2xl p-5 flex flex-col">
+          <div class="flex items-center justify-between mb-2.5">
+            <div class="flex items-center gap-2">
+              <span class="w-6 h-6 rounded-lg bg-indigo-500/20 text-indigo-400 font-semibold text-xs flex items-center justify-center">3</span>
+              <h2 class="font-heading font-semibold text-white text-sm">Target Job Description</h2>
+            </div>
+          </div>
+
+          <!-- Quick Samples Selector -->
+          <div class="flex flex-wrap gap-1.5 mb-3">
+            <button id="btn-sample-jd-pr" type="button" class="text-[11px] px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+              + PR Crisis Sample
+            </button>
+            <button id="btn-sample-jd-clinical" type="button" class="text-[11px] px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+              + Wellness Director Sample
+            </button>
+            <button id="btn-sample-jd-sales" type="button" class="text-[11px] px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+              + B2B Sales Sample
+            </button>
+          </div>
+
+          <textarea id="jd-input" rows="6" class="w-full bg-slate-900/90 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 resize-y font-mono" placeholder="Paste the complete job posting / duties / qualifications here..."></textarea>
+        </section>
+
+        <!-- Generation Action Trigger Buttons -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <button id="btn-gen-bullets" type="button" class="flex flex-col items-center justify-center p-3 rounded-xl bg-gradient-to-b from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-medium text-xs shadow-lg shadow-indigo-600/20 transition transform active:scale-[0.98]">
+            <svg class="w-4 h-4 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+            <span>Tailor Bullets</span>
+          </button>
+
+          <button id="btn-gen-cover-letter" type="button" class="flex flex-col items-center justify-center p-3 rounded-xl bg-gradient-to-b from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-medium text-xs shadow-lg shadow-emerald-600/20 transition transform active:scale-[0.98]">
+            <svg class="w-4 h-4 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+            </svg>
+            <span>AP Cover Letter</span>
+          </button>
+
+          <button id="btn-gen-gap" type="button" class="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-medium text-xs transition transform active:scale-[0.98]">
+            <svg class="w-4 h-4 mb-1 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            <span>Gap Analysis</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN: Real-Time ATS Match Metrics & Output (7 cols on lg) -->
+      <div class="lg:col-span-7 flex flex-col gap-6">
+
+        <!-- ATS Match Diagnostics Card -->
+        <section class="glass-panel rounded-2xl p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="font-heading font-semibold text-white text-sm flex items-center gap-2">
+              <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+              </svg>
+              ATS Compatibility & Keyword Coverage
+            </h2>
+            <span class="text-[11px] text-slate-400">Live Client Scoring</span>
+          </div>
+
+          <div class="flex flex-col sm:flex-row items-center gap-6">
+            <!-- Circular Gauge -->
+            <div class="relative w-28 h-28 flex-shrink-0 flex items-center justify-center">
+              <svg class="w-28 h-28" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="42" stroke="rgba(255,255,255,0.06)" stroke-width="10" fill="none"></circle>
+                <circle id="gauge-circle" class="gauge-circle" cx="50" cy="50" r="42" stroke="#6366f1" stroke-width="10" fill="none" stroke-linecap="round" stroke-dasharray="263.89" stroke-dashoffset="263.89"></circle>
+              </svg>
+              <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+                <span id="score-text" class="font-heading font-extrabold text-2xl text-white">0%</span>
+                <span class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Match</span>
+              </div>
+            </div>
+
+            <!-- Score Diagnosis & Feedback -->
+            <div class="flex-1 w-full space-y-2">
+              <p id="score-summary" class="text-xs text-slate-300 leading-relaxed font-medium">
+                Add your resume and target job description to compute ATS compatibility.
+              </p>
+
+              <!-- Competencies Matched -->
+              <div>
+                <div class="text-[11px] font-semibold text-slate-400 mb-1">Matched Core Competencies:</div>
+                <div id="matched-competencies" class="flex flex-wrap gap-1.5">
+                  <span class="text-xs text-gray-500 italic">No direct competency matches yet</span>
+                </div>
+              </div>
+
+              <!-- Competencies Missing -->
+              <div>
+                <div class="text-[11px] font-semibold text-slate-400 mb-1">Critical Gaps to Bridge:</div>
+                <div id="missing-competencies" class="flex flex-wrap gap-1.5">
+                  <span class="text-xs text-gray-500 italic">No gaps calculated</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Extra Keywords & Action Verbs Section (Collapsible) -->
+          <div class="mt-4 pt-4 border-t border-slate-800/80 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <div class="text-[11px] font-semibold text-slate-400 mb-1.5">Job Description Missing Keywords:</div>
+              <div id="missing-keywords" class="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
+                <span class="text-xs text-gray-500 italic">None detected</span>
+              </div>
+            </div>
+            <div>
+              <div class="text-[11px] font-semibold text-slate-400 mb-1.5">Target Action Verbs Found:</div>
+              <div id="verb-badges" class="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
+                <span class="text-xs text-gray-500 italic">None detected</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tailored Document Output Section -->
+        <section class="glass-panel rounded-2xl p-5 flex-1 flex flex-col min-h-[440px]">
+          <!-- Output Card Header & Tabs -->
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 pb-3 mb-4">
+            <!-- Tabs -->
+            <div class="flex items-center gap-1 bg-slate-900/80 p-1 rounded-xl border border-slate-800">
+              <button type="button" data-tab="bullets" class="output-tab-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-600 text-white transition shadow">
+                Tailored Bullets & Summary
+              </button>
+              <button type="button" data-tab="cover_letter" class="output-tab-btn px-3 py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-white transition">
+                AP Cover Letter
+              </button>
+              <button type="button" data-tab="gap_analysis" class="output-tab-btn px-3 py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-white transition">
+                Gap & Interview Prep
+              </button>
+            </div>
+
+            <!-- Export Buttons -->
+            <div class="flex items-center gap-2">
+              <button id="copy-btn" type="button" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-slate-200 hover:text-white transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+                </svg>
+                <span>Copy</span>
+              </button>
+              <button id="download-btn" type="button" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-slate-200 hover:text-white transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                </svg>
+                <span>Download .md</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Tab Content Display Area -->
+          <div class="flex-1 relative flex flex-col">
+            <!-- Placeholder State -->
+            <div id="output-placeholder" class="flex-1 flex flex-col items-center justify-center text-center p-8 border border-dashed border-slate-800/80 rounded-xl bg-slate-900/30">
+              <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center mb-3">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+                </svg>
+              </div>
+              <h3 class="font-heading font-medium text-slate-200 text-sm mb-1">Ready for Generation</h3>
+              <p class="text-xs text-slate-500 max-w-sm">
+                Select your persona, provide your resume and target job description, then click "Tailor Bullets", "AP Cover Letter", or "Gap Analysis" above.
+              </p>
+            </div>
+
+            <!-- Loading Spinner State -->
+            <div id="output-loading" class="hidden flex-1 flex flex-col items-center justify-center text-center p-8">
+              <div class="w-10 h-10 border-3 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-4"></div>
+              <p id="loading-status-text" class="text-xs font-medium text-indigo-300 animate-pulse">
+                Optimizing high-impact STAR bullet points with Gemini...
+              </p>
+              <p class="text-[11px] text-slate-500 mt-1">Dispatched via Cloudflare Pages edge isolate</p>
+            </div>
+
+            <!-- Formatted Markdown Output -->
+            <div id="output-content" class="hidden flex-1 prose-custom bg-slate-900/60 p-5 rounded-xl border border-slate-800/80 overflow-y-auto max-h-[500px]"></div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Gemini API Key Settings Modal -->
+  <div id="api-key-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+    <div class="glass-panel max-w-md w-full rounded-2xl p-6 shadow-2xl border border-slate-700">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-heading font-bold text-white text-base flex items-center gap-2">
+          <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+          </svg>
+          Google Gemini API Key
+        </h3>
+        <button id="close-modal-btn" type="button" class="text-slate-400 hover:text-white transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-300 mb-4 leading-relaxed">
+        You can configure your key globally in Cloudflare Pages settings (as <code class="text-indigo-300 font-mono">AI_API_KEY</code> or <code class="text-indigo-300 font-mono">GEMINI_API_KEY</code>), or provide your personal key here. It is kept securely in your browser's <code class="font-mono text-slate-400">localStorage</code> and never shared.
+      </p>
+
+      <div class="space-y-3 mb-5">
+        <label class="block text-xs font-medium text-slate-300">Gemini API Key</label>
+        <input id="api-key-input" type="password" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono" placeholder="AIzaSy..." />
+        <p class="text-[11px] text-slate-500">
+          Get a free API key at <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="text-indigo-400 hover:underline">Google AI Studio</a>.
+        </p>
+      </div>
+
+      <div class="flex items-center justify-end gap-2">
+        <button id="save-api-key-btn" type="button" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs shadow transition">
+          Save Settings
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl border shadow-2xl transition-all duration-300 transform translate-y-4 opacity-0 pointer-events-none">
+    <div id="toast-message" class="text-xs font-medium">Notification</div>
+  </div>
+
+  <!-- Application Entry Script (ES Module) -->
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>
