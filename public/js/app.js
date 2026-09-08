@@ -671,19 +671,9 @@ function updateApiKeyBadge() {
   if (!elements.apiKeyStatusBadge) return;
 
   if (state.userApiKey) {
-    elements.apiKeyStatusBadge.innerHTML = `
-      <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-      <span>Gemini Key Active</span>
-    `;
-    elements.apiKeyStatusBadge.className =
-      "flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/30";
+    elements.apiKeyStatusBadge.textContent = "Custom Key Active (Click to edit)";
   } else {
-    elements.apiKeyStatusBadge.innerHTML = `
-      <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
-      <span>Server Key / Custom</span>
-    `;
-    elements.apiKeyStatusBadge.className =
-      "flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700 hover:border-indigo-500 transition cursor-pointer";
+    elements.apiKeyStatusBadge.textContent = "Custom Key Override (Optional)";
   }
 }
 
