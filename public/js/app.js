@@ -6,6 +6,7 @@ import {
 } from "./profiles.js";
 import { parseDocument } from "./parser.js";
 import { scoreResume } from "./scorer.js";
+import { coach } from "./chat.js";
 
 // Application State
 const state = {
@@ -160,9 +161,30 @@ const elements = {
   saveApiKeyBtn: document.getElementById("save-api-key-btn"),
   apiKeyInput: document.getElementById("api-key-input"),
   apiKeyStatusBadge: document.getElementById("api-key-status-badge"),
+  // Help Guide Modal
+  helpGuideBtn: document.getElementById("help-guide-btn"),
+  helpGuideModal: document.getElementById("help-guide-modal"),
+  closeHelpModalBtn: document.getElementById("close-help-modal-btn"),
+  guideCloseBottomBtn: document.getElementById("guide-close-bottom-btn"),
   toast: document.getElementById("toast"),
   toastMessage: document.getElementById("toast-message"),
 };
+
+// Returns live context for the AI Career Coach
+function getLiveContext() {
+  const profile = getProfile(state.selectedProfileId);
+  return {
+    profile,
+    score: state.lastScoreData?.score || 0,
+    matchedCompetencies: state.lastScoreData?.matchedCompetencies || [],
+    missingCompetencies: state.lastScoreData?.missingCompetencies || [],
+    matchedKeywords: state.lastScoreData?.matchedKeywords || [],
+    missingKeywords: state.lastScoreData?.missingKeywords || [],
+    hasResume: !!(state.resumeText && state.resumeText.trim()),
+    hasJd: !!(state.jobDescriptionText && state.jobDescriptionText.trim()),
+    userApiKey: state.userApiKey || "",
+  };
+}
 
 // Initialization
 document.addEventListener("DOMContentLoaded", () => {
@@ -170,6 +192,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupProfiles();
   updateApiKeyBadge();
   renderScore();
+  coach.init(getLiveContext);
 });
 
 function setupProfiles() {
@@ -373,6 +396,19 @@ function setupEventListeners() {
     }
     updateApiKeyBadge();
     elements.apiKeyModal?.classList.add("hidden");
+  });
+
+  // Help Guide Modal
+  elements.helpGuideBtn?.addEventListener("click", () => {
+    elements.helpGuideModal?.classList.remove("hidden");
+  });
+
+  elements.closeHelpModalBtn?.addEventListener("click", () => {
+    elements.helpGuideModal?.classList.add("hidden");
+  });
+
+  elements.guideCloseBottomBtn?.addEventListener("click", () => {
+    elements.helpGuideModal?.classList.add("hidden");
   });
 }
 
