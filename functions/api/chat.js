@@ -31,12 +31,16 @@ export async function onRequestPost(context) {
       );
     }
 
-    const apiKey =
-      (userApiKey && userApiKey.trim()) ||
-      context.env.AI_API_KEY ||
-      context.env.GEMINI_API_KEY;
+    const candidateKeys = [];
+    if (userApiKey && userApiKey.trim()) {
+      candidateKeys.push(userApiKey.trim());
+    }
+    const serverKey = context.env.AI_API_KEY || context.env.GEMINI_API_KEY;
+    if (serverKey && !candidateKeys.includes(serverKey)) {
+      candidateKeys.push(serverKey);
+    }
 
-    if (!apiKey) {
+    if (candidateKeys.length === 0) {
       return new Response(
         JSON.stringify({
           error:
@@ -111,26 +115,32 @@ Your Core Objectives:
     let lastError = null;
     let replyText = null;
 
-    for (const model of models) {
-      try {
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-        const resp = await fetch(geminiUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
+    keyLoop: for (const key of candidateKeys) {
+      for (const model of models) {
+        try {
+          const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+          const resp = await fetch(geminiUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
 
-        if (resp.ok) {
-          const data = await resp.json();
-          replyText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (replyText) break;
-        } else {
-          const errData = await resp.json().catch(() => ({}));
-          lastError = errData.error?.message || `HTTP ${resp.status}`;
-          if (resp.status !== 404 && resp.status !== 503) break;
+          if (resp.ok) {
+            const data = await resp.json();
+            replyText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (replyText) break keyLoop;
+          } else {
+            const errData = await resp.json().catch(() => ({}));
+            lastError = errData.error?.message || `HTTP ${resp.status}`;
+            // If the key is invalid or unauthorized, try next candidate key immediately
+            if (resp.status === 400 || resp.status === 401 || resp.status === 403) {
+              continue keyLoop;
+            }
+            if (resp.status !== 404 && resp.status !== 503) break;
+          }
+        } catch (err) {
+          lastError = err.message;
         }
-      } catch (err) {
-        lastError = err.message;
       }
     }
 

@@ -44,13 +44,16 @@ export async function onRequestPost(context) {
       );
     }
 
-    // Resolve API key: prefer user-provided key if supplied, fallback to Cloudflare Pages env vars
-    const apiKey =
-      (userApiKey && userApiKey.trim()) ||
-      context.env.AI_API_KEY ||
-      context.env.GEMINI_API_KEY;
+    const candidateKeys = [];
+    if (userApiKey && userApiKey.trim()) {
+      candidateKeys.push(userApiKey.trim());
+    }
+    const serverKey = context.env.AI_API_KEY || context.env.GEMINI_API_KEY;
+    if (serverKey && !candidateKeys.includes(serverKey)) {
+      candidateKeys.push(serverKey);
+    }
 
-    if (!apiKey) {
+    if (candidateKeys.length === 0) {
       return new Response(
         JSON.stringify({
           error:
@@ -143,33 +146,38 @@ Include:
     let lastError = null;
     let responseText = null;
 
-    for (const model of models) {
-      try {
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-        const resp = await fetch(geminiUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
+    keyLoop: for (const key of candidateKeys) {
+      for (const model of models) {
+        try {
+          const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+          const resp = await fetch(geminiUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
 
-        if (resp.ok) {
-          const data = await resp.json();
-          const candidateText =
-            data.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (candidateText) {
-            responseText = candidateText;
-            break;
+          if (resp.ok) {
+            const data = await resp.json();
+            const candidateText =
+              data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (candidateText) {
+              responseText = candidateText;
+              break keyLoop;
+            }
+          } else {
+            const errData = await resp.json().catch(() => ({}));
+            lastError = errData.error?.message || `HTTP ${resp.status}`;
+            // If the key is invalid or unauthorized, switch immediately to the next candidate key
+            if (resp.status === 400 || resp.status === 401 || resp.status === 403) {
+              continue keyLoop;
+            }
+            if (resp.status !== 404 && resp.status !== 503) {
+              break;
+            }
           }
-        } else {
-          const errData = await resp.json().catch(() => ({}));
-          lastError = errData.error?.message || `HTTP ${resp.status}`;
-          // If model not found (404), continue to fallback model
-          if (resp.status !== 404) {
-            break;
-          }
+        } catch (err) {
+          lastError = err.message;
         }
-      } catch (err) {
-        lastError = err.message;
       }
     }
 

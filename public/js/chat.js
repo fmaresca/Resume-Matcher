@@ -316,10 +316,13 @@ class AICoach {
       this.messages.push({ role: "assistant", content: data.reply });
       this.appendMessage("assistant", data.reply);
     } catch (err) {
+      if (err.message && err.message.includes("API key not valid")) {
+        localStorage.removeItem("resumewatcher_gemini_key");
+      }
       this.removeThinkingBubble();
       this.appendMessage(
         "assistant",
-        `⚠️ **Error:** ${err.message}\n\n*Tip: Check your network connection or API status.*`
+        `⚠️ **Notice:** ${err.message}\n\n*Tip: Stale client credentials have been automatically cleared. Please ask your question again to use the persistent server AI credentials!*`
       );
     } finally {
       this.isThinking = false;

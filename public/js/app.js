@@ -161,6 +161,7 @@ const elements = {
   apiKeyModal: document.getElementById("api-key-modal"),
   closeModalBtn: document.getElementById("close-modal-btn"),
   saveApiKeyBtn: document.getElementById("save-api-key-btn"),
+  clearApiKeyBtn: document.getElementById("clear-api-key-btn"),
   apiKeyInput: document.getElementById("api-key-input"),
   apiKeyStatusBadge: document.getElementById("api-key-status-badge"),
   // Help Guide Modal
@@ -400,6 +401,15 @@ function setupEventListeners() {
     elements.apiKeyModal?.classList.add("hidden");
   });
 
+  elements.clearApiKeyBtn?.addEventListener("click", () => {
+    state.userApiKey = "";
+    localStorage.removeItem("resumewatcher_gemini_key");
+    if (elements.apiKeyInput) elements.apiKeyInput.value = "";
+    updateApiKeyBadge();
+    showToast("Cleared custom key. Using persistent server credentials.");
+    elements.apiKeyModal?.classList.add("hidden");
+  });
+
   // Theme Toggle Button (Light/Dark Mode)
   elements.themeToggleBtn?.addEventListener("click", () => {
     const isDark = document.documentElement.classList.contains("dark");
@@ -615,6 +625,11 @@ async function generateDocument(documentType) {
     displayOutput(data.result);
     showToast("Tailored document generated successfully!");
   } catch (err) {
+    if (err.message && err.message.includes("API key not valid")) {
+      state.userApiKey = "";
+      localStorage.removeItem("resumewatcher_gemini_key");
+      updateApiKeyBadge();
+    }
     showToast(err.message, "error");
     if (!state.generatedOutputs[documentType]) {
       elements.outputPlaceholder?.classList.remove("hidden");
