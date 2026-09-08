@@ -130,6 +130,7 @@ const elements = {
   saveCustomProfileBtn: document.getElementById("save-custom-profile-btn"),
   // Gauge and Match Elements
   gaugeCircle: document.getElementById("gauge-circle"),
+  gaugeContainer: document.getElementById("gauge-container"),
   scoreText: document.getElementById("score-text"),
   scoreSummary: document.getElementById("score-summary"),
   matchedKwContainer: document.getElementById("matched-keywords"),
@@ -154,7 +155,8 @@ const elements = {
   sampleJdPrBtn: document.getElementById("btn-sample-jd-pr"),
   sampleJdClinicalBtn: document.getElementById("btn-sample-jd-clinical"),
   sampleJdSalesBtn: document.getElementById("btn-sample-jd-sales"),
-  // Settings & API Key
+  // Settings & Theme
+  themeToggleBtn: document.getElementById("theme-toggle-btn"),
   apiKeyBtn: document.getElementById("api-key-btn"),
   apiKeyModal: document.getElementById("api-key-modal"),
   closeModalBtn: document.getElementById("close-modal-btn"),
@@ -398,6 +400,31 @@ function setupEventListeners() {
     elements.apiKeyModal?.classList.add("hidden");
   });
 
+  // Theme Toggle Button (Light/Dark Mode)
+  elements.themeToggleBtn?.addEventListener("click", () => {
+    const isDark = document.documentElement.classList.contains("dark");
+    if (isDark) {
+      document.documentElement.classList.remove("dark");
+      document.documentElement.classList.add("light");
+      localStorage.setItem("resumewatcher_theme", "light");
+      showToast("Switched to Light mode");
+    } else {
+      document.documentElement.classList.add("dark");
+      document.documentElement.classList.remove("light");
+      localStorage.setItem("resumewatcher_theme", "dark");
+      showToast("Switched to Dark mode");
+    }
+  });
+
+  // Global Keyboard Navigation (Close dialogs on Escape)
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      elements.helpGuideModal?.classList.add("hidden");
+      elements.apiKeyModal?.classList.add("hidden");
+      coach.close();
+    }
+  });
+
   // Help Guide Modal
   elements.helpGuideBtn?.addEventListener("click", () => {
     elements.helpGuideModal?.classList.remove("hidden");
@@ -454,6 +481,10 @@ function renderScore(scoreData = null) {
   const circumference = 2 * Math.PI * 42; // r=42
   const offset = circumference - (data.score / 100) * circumference;
 
+  if (elements.gaugeContainer) {
+    elements.gaugeContainer.setAttribute("aria-valuenow", data.score);
+  }
+
   if (elements.gaugeCircle) {
     elements.gaugeCircle.style.strokeDasharray = `${circumference}`;
     elements.gaugeCircle.style.strokeDashoffset = `${offset}`;
@@ -481,9 +512,9 @@ function renderScore(scoreData = null) {
     elements.matchedCompContainer.innerHTML = (data.matchedCompetencies || [])
       .map(
         (c) =>
-          `<span class="px-2.5 py-1 text-xs font-medium rounded-md bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">✓ ${c}</span>`
+          `<span class="px-2.5 py-1 text-xs font-medium rounded-md bg-emerald-500/15 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1">✓ ${c}</span>`
       )
-      .join("") || `<span class="text-xs text-gray-500 italic">No direct competency matches yet</span>`;
+      .join("") || `<span class="text-xs text-slate-500 dark:text-gray-500 italic">No direct competency matches yet</span>`;
   }
 
   // Render Missing Competencies
@@ -491,9 +522,9 @@ function renderScore(scoreData = null) {
     elements.missingCompContainer.innerHTML = (data.missingCompetencies || [])
       .map(
         (c) =>
-          `<span class="px-2.5 py-1 text-xs font-medium rounded-md bg-rose-500/10 text-rose-300 border border-rose-500/30 flex items-center gap-1">+ ${c}</span>`
+          `<span class="px-2.5 py-1 text-xs font-medium rounded-md bg-rose-500/15 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/30 flex items-center gap-1">+ ${c}</span>`
       )
-      .join("") || `<span class="text-xs text-emerald-400 italic">All target competencies covered!</span>`;
+      .join("") || `<span class="text-xs text-emerald-600 dark:text-emerald-400 italic">All target competencies covered!</span>`;
   }
 
   // Render Matched Keywords
@@ -501,9 +532,9 @@ function renderScore(scoreData = null) {
     elements.matchedKwContainer.innerHTML = (data.matchedKeywords || [])
       .map(
         (k) =>
-          `<span class="px-2 py-0.5 text-xs rounded bg-slate-800 text-slate-300 border border-slate-700">${k}</span>`
+          `<span class="px-2 py-0.5 text-xs rounded bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-300 border border-slate-300 dark:border-slate-700 font-mono">${k}</span>`
       )
-      .join("") || `<span class="text-xs text-gray-500 italic">None detected</span>`;
+      .join("") || `<span class="text-xs text-slate-500 dark:text-gray-500 italic">None detected</span>`;
   }
 
   // Render Missing Keywords
@@ -511,9 +542,9 @@ function renderScore(scoreData = null) {
     elements.missingKwContainer.innerHTML = (data.missingKeywords || [])
       .map(
         (k) =>
-          `<span class="px-2 py-0.5 text-xs rounded bg-amber-500/10 text-amber-300 border border-amber-500/30">${k}</span>`
+          `<span class="px-2 py-0.5 text-xs rounded bg-amber-500/15 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30 font-mono">${k}</span>`
       )
-      .join("") || `<span class="text-xs text-gray-500 italic">None detected</span>`;
+      .join("") || `<span class="text-xs text-slate-500 dark:text-gray-500 italic">None detected</span>`;
   }
 
   // Render Action Verbs
@@ -521,9 +552,9 @@ function renderScore(scoreData = null) {
     elements.verbBadgeContainer.innerHTML = (data.verbMatches || [])
       .map(
         (v) =>
-          `<span class="px-2.5 py-1 text-xs rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 font-mono">${v}</span>`
+          `<span class="px-2.5 py-1 text-xs rounded-full bg-indigo-500/15 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-500/30 font-mono">${v}</span>`
       )
-      .join("") || `<span class="text-xs text-gray-500 italic">None detected</span>`;
+      .join("") || `<span class="text-xs text-slate-500 dark:text-gray-500 italic">None detected</span>`;
   }
 }
 
@@ -598,14 +629,16 @@ async function generateDocument(documentType) {
 function switchTab(tab) {
   state.activeTab = tab;
 
-  // Update tab buttons UI
+  // Update tab buttons UI with accessibility attributes
   elements.tabBtns.forEach((btn) => {
-    if (btn.dataset.tab === tab) {
+    const isActive = btn.dataset.tab === tab;
+    btn.setAttribute("aria-selected", isActive ? "true" : "false");
+    if (isActive) {
       btn.classList.add("bg-indigo-600", "text-white", "shadow");
-      btn.classList.remove("text-gray-400", "hover:text-white");
+      btn.classList.remove("text-slate-600", "dark:text-gray-400", "hover:text-slate-900", "dark:hover:text-white");
     } else {
       btn.classList.remove("bg-indigo-600", "text-white", "shadow");
-      btn.classList.add("text-gray-400", "hover:text-white");
+      btn.classList.add("text-slate-600", "dark:text-gray-400", "hover:text-slate-900", "dark:hover:text-white");
     }
   });
 

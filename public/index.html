@@ -6,6 +6,20 @@
   <title>ResumeWatcher | Serverless ATS Resume & Cover Letter Suite</title>
   <meta name="description" content="Free-tier Cloudflare Pages serverless application for tailoring resumes and cover letters with Google Gemini AI. Pre-built profiles for PR & Crisis, Wellness Directors, and B2B/B2C Sales." />
   
+  <!-- Immediate theme script to prevent flash -->
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('resumewatcher_theme');
+      if (savedTheme === 'light' || (!savedTheme && window.matchMedia('(prefers-color-scheme: light)').matches)) {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.classList.add('light');
+      } else {
+        document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
+      }
+    })();
+  </script>
+
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -30,7 +44,6 @@
   <!-- External Document Parsers & Markdown CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>
-    // Configure worker for PDF.js
     if (window.pdfjsLib) {
       window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     }
@@ -41,131 +54,154 @@
   <!-- Custom Stylesheet -->
   <link rel="stylesheet" href="/css/styles.css" />
 </head>
-<body class="bg-slate-950 text-slate-100 flex flex-col min-h-screen selection:bg-indigo-500 selection:text-white">
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col min-h-screen selection:bg-indigo-500 selection:text-white transition-colors duration-200">
+
+  <!-- ADA Skip Link -->
+  <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:bg-indigo-600 focus:text-white focus:rounded-lg focus:shadow-lg focus:ring-2 focus:ring-white">
+    Skip to main content
+  </a>
 
   <!-- Header Navigation -->
-  <header class="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md sticky top-0 z-40">
+  <header class="border-b border-slate-200 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/60 backdrop-blur-md sticky top-0 z-40 transition-colors duration-200">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-emerald-400 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-emerald-400 flex items-center justify-center shadow-lg shadow-indigo-500/20" aria-hidden="true">
           <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
           </svg>
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <h1 class="font-heading font-bold text-lg text-white tracking-tight">ResumeWatcher</h1>
-            <span class="px-2 py-0.5 text-[10px] uppercase font-semibold tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full">Edge AI</span>
+            <h1 class="font-heading font-bold text-lg text-slate-900 dark:text-white tracking-tight">ResumeWatcher</h1>
+            <span class="px-2 py-0.5 text-[10px] uppercase font-semibold tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded-full">Edge AI</span>
           </div>
-          <p class="text-xs text-slate-400 hidden sm:block">Serverless ATS Optimization & Targeted Document Suite</p>
+          <p class="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">Serverless ATS Optimization & Targeted Document Suite</p>
         </div>
       </div>
 
       <!-- Right Header Actions -->
-      <div class="flex items-center gap-2.5">
+      <div class="flex items-center gap-2 sm:gap-2.5">
+        
+        <!-- Dark / Light Mode Toggle Button -->
+        <button id="theme-toggle-btn" type="button" aria-label="Toggle dark or light color theme" title="Toggle color theme (Light / Dark)" class="flex items-center justify-center w-8 h-8 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition">
+          <!-- Sun icon (shown in dark mode) -->
+          <svg id="theme-icon-sun" class="w-4 h-4 hidden dark:block text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+          </svg>
+          <!-- Moon icon (shown in light mode) -->
+          <svg id="theme-icon-moon" class="w-4 h-4 block dark:hidden text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+          </svg>
+          <span class="sr-only">Toggle dark or light mode</span>
+        </button>
+
         <!-- Help & User Guide Trigger -->
-        <button id="help-guide-btn" type="button" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/80 hover:bg-slate-800 hover:border-slate-600 transition text-xs text-slate-200 hover:text-white">
-          <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button id="help-guide-btn" type="button" aria-haspopup="dialog" aria-expanded="false" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-800 transition text-xs text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white">
+          <svg class="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
           </svg>
           <span>Help & Guide</span>
         </button>
 
         <!-- AI Career Coach Trigger -->
-        <button type="button" class="open-chat-trigger flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-emerald-500 hover:from-indigo-500 hover:to-emerald-400 text-white font-medium text-xs shadow-md shadow-indigo-500/20 transition transform active:scale-95">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button type="button" aria-haspopup="dialog" aria-expanded="false" class="open-chat-trigger flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-emerald-500 hover:from-indigo-500 hover:to-emerald-400 text-white font-medium text-xs shadow-md shadow-indigo-500/20 transition transform active:scale-95">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
           </svg>
-          <span>AI Career Coach</span>
+          <span class="hidden sm:inline">AI Career Coach</span>
+          <span class="sm:hidden">Coach</span>
         </button>
 
         <!-- API Key Status / Config Trigger -->
-        <button id="api-key-btn" type="button" class="group flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/80 hover:bg-slate-800 hover:border-slate-600 transition text-xs">
+        <button id="api-key-btn" type="button" aria-haspopup="dialog" aria-expanded="false" class="group flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-800 transition text-xs">
           <div id="api-key-status-badge">
-            <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
-            <span>API Settings</span>
+            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+            <span class="text-slate-700 dark:text-slate-300">API Settings</span>
           </div>
-          <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-white transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-700 dark:group-hover:text-white transition" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
           </svg>
         </button>
 
         <!-- GitHub Fork Link -->
-        <a href="https://github.com/fmaresca/Resume-Matcher" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-slate-800 transition">
-          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+        <a href="https://github.com/fmaresca/Resume-Matcher" target="_blank" rel="noopener noreferrer" aria-label="View source repository on GitHub (opens in new tab)" class="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24" aria-hidden="true">
             <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
           </svg>
-          <span class="hidden sm:inline">GitHub</span>
+          <span class="hidden md:inline">GitHub</span>
         </a>
       </div>
     </div>
   </header>
 
   <!-- Main Grid Workspace -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+  <main id="main-content" role="main" aria-label="Resume Tailoring Workspace" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
       <!-- LEFT COLUMN: Inputs & Role Profiles (5 cols on lg) -->
       <div class="lg:col-span-5 flex flex-col gap-6">
 
         <!-- 1. Master Resume Input Card -->
-        <section class="glass-panel rounded-2xl p-5">
+        <section class="glass-panel rounded-2xl p-5" aria-labelledby="heading-master-resume">
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-2">
-              <span class="w-6 h-6 rounded-lg bg-indigo-500/20 text-indigo-400 font-semibold text-xs flex items-center justify-center">1</span>
-              <h2 class="font-heading font-semibold text-white text-sm">Master Resume</h2>
+              <span class="w-6 h-6 rounded-lg bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-semibold text-xs flex items-center justify-center" aria-hidden="true">1</span>
+              <h2 id="heading-master-resume" class="font-heading font-semibold text-slate-900 dark:text-white text-sm">Master Resume</h2>
             </div>
-            <button id="btn-sample-resume" type="button" class="text-xs text-indigo-400 hover:text-indigo-300 font-medium hover:underline transition">
+            <button id="btn-sample-resume" type="button" class="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 font-medium hover:underline transition">
               Load Sample Resume
             </button>
           </div>
 
           <!-- Drag & Drop / File Upload Area -->
-          <div id="file-upload-area" class="border-2 border-dashed border-slate-700/80 hover:border-indigo-500/70 rounded-xl p-4 text-center cursor-pointer transition bg-slate-900/40 mb-3 group">
+          <div id="file-upload-area" role="button" tabindex="0" aria-label="Upload resume file. Click or drag and drop PDF, Word, or text file." class="border-2 border-dashed border-slate-300 dark:border-slate-700/80 hover:border-indigo-500 dark:hover:border-indigo-500/70 rounded-xl p-4 text-center cursor-pointer transition bg-slate-50 dark:bg-slate-900/40 mb-3 group">
+            <label for="file-input" class="sr-only">Upload Master Resume File</label>
             <input id="file-input" type="file" accept=".pdf,.docx,.txt,.md" class="hidden" />
             <div class="flex flex-col items-center justify-center gap-1.5 py-1">
-              <svg class="w-7 h-7 text-slate-400 group-hover:text-indigo-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-7 h-7 text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
               </svg>
-              <p class="text-xs font-medium text-slate-300">
-                <span class="text-indigo-400 underline underline-offset-2">Click to upload</span> or drag and drop
+              <p class="text-xs font-medium text-slate-700 dark:text-slate-300">
+                <span class="text-indigo-600 dark:text-indigo-400 underline underline-offset-2">Click to upload</span> or drag and drop
               </p>
-              <p class="text-[11px] text-slate-500">PDF, Word (.docx), or Text (.txt)</p>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400">PDF, Word (.docx), or Text (.txt)</p>
             </div>
           </div>
 
           <!-- Attached File Badge -->
-          <div id="file-name-badge" class="hidden items-center justify-between px-3 py-1.5 mb-3 rounded-lg bg-slate-800/80 border border-slate-700 text-xs text-slate-300">
+          <div id="file-name-badge" class="hidden items-center justify-between px-3 py-1.5 mb-3 rounded-lg bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300">
             <span class="flex items-center gap-2 truncate">
-              <svg class="w-4 h-4 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4 text-emerald-500 dark:text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
               <span id="file-name-text" class="truncate font-mono">resume.pdf</span>
             </span>
-            <button id="clear-file-btn" type="button" class="text-slate-400 hover:text-rose-400 transition ml-2">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button id="clear-file-btn" type="button" aria-label="Remove uploaded file" class="text-slate-400 hover:text-rose-500 transition ml-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
               </svg>
             </button>
           </div>
 
           <!-- Resume Direct Textarea -->
-          <textarea id="resume-input" rows="5" class="w-full bg-slate-900/90 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono resize-y" placeholder="Or paste your raw master resume text here..."></textarea>
+          <label for="resume-input" class="sr-only">Master Resume Content</label>
+          <textarea id="resume-input" rows="5" class="w-full bg-white dark:bg-slate-900/90 border border-slate-300 dark:border-slate-800 rounded-xl p-3 text-xs text-slate-900 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono resize-y" placeholder="Or paste your raw master resume text here..."></textarea>
         </section>
 
         <!-- 2. Target Profile Selector Card -->
-        <section class="glass-panel rounded-2xl p-5">
+        <section class="glass-panel rounded-2xl p-5" aria-labelledby="heading-target-persona">
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-2">
-              <span class="w-6 h-6 rounded-lg bg-indigo-500/20 text-indigo-400 font-semibold text-xs flex items-center justify-center">2</span>
-              <h2 class="font-heading font-semibold text-white text-sm">Target Persona / Track</h2>
+              <span class="w-6 h-6 rounded-lg bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-semibold text-xs flex items-center justify-center" aria-hidden="true">2</span>
+              <h2 id="heading-target-persona" class="font-heading font-semibold text-slate-900 dark:text-white text-sm">Target Persona / Track</h2>
             </div>
-            <span id="profile-category" class="px-2 py-0.5 text-[10px] rounded bg-slate-800 text-indigo-300 border border-slate-700 font-medium">Public Relations</span>
+            <span id="profile-category" class="px-2 py-0.5 text-[10px] rounded bg-slate-100 dark:bg-slate-800 text-indigo-600 dark:text-indigo-300 border border-slate-200 dark:border-slate-700 font-medium">Public Relations</span>
           </div>
 
           <div class="space-y-3">
-            <select id="profile-select" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl p-2.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+            <label for="profile-select" class="sr-only">Select Target Persona Profile</label>
+            <select id="profile-select" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700/80 rounded-xl p-2.5 text-xs text-slate-900 dark:text-slate-200 focus:outline-none focus:border-indigo-500">
               <optgroup label="Public Relations & Communications">
                 <option value="crisis_management" selected>Crisis Communications & Issues Management</option>
                 <option value="media_relations">Media Relations & Earned Media</option>
@@ -182,25 +218,25 @@
               </optgroup>
             </select>
 
-            <p id="profile-description" class="text-xs text-slate-400 leading-relaxed italic bg-slate-900/40 p-2.5 rounded-lg border border-slate-800/60"></p>
+            <p id="profile-description" class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed italic bg-slate-100 dark:bg-slate-900/40 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800/60"></p>
 
             <!-- Custom Profile Builder (Expandable if custom selected) -->
-            <div id="custom-profile-section" class="hidden space-y-3 pt-2 border-t border-slate-800/80">
+            <div id="custom-profile-section" class="hidden space-y-3 pt-2 border-t border-slate-200 dark:border-slate-800/80">
               <div>
-                <label class="block text-[11px] font-medium text-slate-400 mb-1">Profile Name</label>
-                <input id="custom-name" type="text" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-indigo-500" placeholder="e.g. Senior Product Manager" />
+                <label for="custom-name" class="block text-[11px] font-medium text-slate-700 dark:text-slate-400 mb-1">Profile Name</label>
+                <input id="custom-name" type="text" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg p-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500" placeholder="e.g. Senior Product Manager" />
               </div>
               <div>
-                <label class="block text-[11px] font-medium text-slate-400 mb-1">Core Competencies (Comma-separated)</label>
-                <textarea id="custom-competencies" rows="2" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-indigo-500" placeholder="Roadmap Execution, Agile, Data Analytics..."></textarea>
+                <label for="custom-competencies" class="block text-[11px] font-medium text-slate-700 dark:text-slate-400 mb-1">Core Competencies (Comma-separated)</label>
+                <textarea id="custom-competencies" rows="2" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg p-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500" placeholder="Roadmap Execution, Agile, Data Analytics..."></textarea>
               </div>
               <div>
-                <label class="block text-[11px] font-medium text-slate-400 mb-1">Target Action Verbs (Comma-separated)</label>
-                <input id="custom-verbs" type="text" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-indigo-500" placeholder="Spearheaded, Delivered, Engineered..." />
+                <label for="custom-verbs" class="block text-[11px] font-medium text-slate-700 dark:text-slate-400 mb-1">Target Action Verbs (Comma-separated)</label>
+                <input id="custom-verbs" type="text" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg p-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500" placeholder="Spearheaded, Delivered, Engineered..." />
               </div>
               <div>
-                <label class="block text-[11px] font-medium text-slate-400 mb-1">Tone & Strategic Focus</label>
-                <input id="custom-emphasis" type="text" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-indigo-500" placeholder="Focus on customer acquisition, speed to market..." />
+                <label for="custom-emphasis" class="block text-[11px] font-medium text-slate-700 dark:text-slate-400 mb-1">Tone & Strategic Focus</label>
+                <input id="custom-emphasis" type="text" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg p-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500" placeholder="Focus on customer acquisition, speed to market..." />
               </div>
               <button id="save-custom-profile-btn" type="button" class="w-full py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition shadow">
                 Save Custom Profile
@@ -210,48 +246,49 @@
         </section>
 
         <!-- 3. Target Job Description Card -->
-        <section class="glass-panel rounded-2xl p-5 flex flex-col">
+        <section class="glass-panel rounded-2xl p-5 flex flex-col" aria-labelledby="heading-job-description">
           <div class="flex items-center justify-between mb-2.5">
             <div class="flex items-center gap-2">
-              <span class="w-6 h-6 rounded-lg bg-indigo-500/20 text-indigo-400 font-semibold text-xs flex items-center justify-center">3</span>
-              <h2 class="font-heading font-semibold text-white text-sm">Target Job Description</h2>
+              <span class="w-6 h-6 rounded-lg bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-semibold text-xs flex items-center justify-center" aria-hidden="true">3</span>
+              <h2 id="heading-job-description" class="font-heading font-semibold text-slate-900 dark:text-white text-sm">Target Job Description</h2>
             </div>
           </div>
 
           <!-- Quick Samples Selector -->
-          <div class="flex flex-wrap gap-1.5 mb-3">
-            <button id="btn-sample-jd-pr" type="button" class="text-[11px] px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+          <div class="flex flex-wrap gap-1.5 mb-3" role="group" aria-label="Quick load sample job postings">
+            <button id="btn-sample-jd-pr" type="button" class="text-[11px] px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 transition">
               + PR Crisis Sample
             </button>
-            <button id="btn-sample-jd-clinical" type="button" class="text-[11px] px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+            <button id="btn-sample-jd-clinical" type="button" class="text-[11px] px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 transition">
               + Wellness Director Sample
             </button>
-            <button id="btn-sample-jd-sales" type="button" class="text-[11px] px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+            <button id="btn-sample-jd-sales" type="button" class="text-[11px] px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 transition">
               + B2B Sales Sample
             </button>
           </div>
 
-          <textarea id="jd-input" rows="6" class="w-full bg-slate-900/90 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 resize-y font-mono" placeholder="Paste the complete job posting / duties / qualifications here..."></textarea>
+          <label for="jd-input" class="sr-only">Target Job Description</label>
+          <textarea id="jd-input" rows="6" class="w-full bg-white dark:bg-slate-900/90 border border-slate-300 dark:border-slate-800 rounded-xl p-3 text-xs text-slate-900 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 resize-y font-mono" placeholder="Paste the complete job posting / duties / qualifications here..."></textarea>
         </section>
 
         <!-- Generation Action Trigger Buttons -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-          <button id="btn-gen-bullets" type="button" class="flex flex-col items-center justify-center p-3 rounded-xl bg-gradient-to-b from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-medium text-xs shadow-lg shadow-indigo-600/20 transition transform active:scale-[0.98]">
-            <svg class="w-4 h-4 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5" role="group" aria-label="Document tailoring actions">
+          <button id="btn-gen-bullets" type="button" aria-label="Tailor resume summary and bullet points using STAR framework" class="flex flex-col items-center justify-center p-3 rounded-xl bg-gradient-to-b from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-medium text-xs shadow-lg shadow-indigo-600/20 transition transform active:scale-[0.98]">
+            <svg class="w-4 h-4 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
             </svg>
             <span>Tailor Bullets</span>
           </button>
 
-          <button id="btn-gen-cover-letter" type="button" class="flex flex-col items-center justify-center p-3 rounded-xl bg-gradient-to-b from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-medium text-xs shadow-lg shadow-emerald-600/20 transition transform active:scale-[0.98]">
-            <svg class="w-4 h-4 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button id="btn-gen-cover-letter" type="button" aria-label="Generate tailored AP-style cover letter" class="flex flex-col items-center justify-center p-3 rounded-xl bg-gradient-to-b from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-medium text-xs shadow-lg shadow-emerald-600/20 transition transform active:scale-[0.98]">
+            <svg class="w-4 h-4 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
             </svg>
             <span>AP Cover Letter</span>
           </button>
 
-          <button id="btn-gen-gap" type="button" class="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-medium text-xs transition transform active:scale-[0.98]">
-            <svg class="w-4 h-4 mb-1 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button id="btn-gen-gap" type="button" aria-label="Run deep ATS gap analysis and interview strategy" class="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-medium text-xs transition transform active:scale-[0.98]">
+            <svg class="w-4 h-4 mb-1 text-amber-500 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
             </svg>
             <span>Gap Analysis</span>
@@ -264,98 +301,99 @@
       <div class="lg:col-span-7 flex flex-col gap-6">
 
         <!-- ATS Match Diagnostics Card -->
-        <section class="glass-panel rounded-2xl p-5">
+        <section class="glass-panel rounded-2xl p-5" aria-labelledby="heading-ats-diagnostics">
           <div class="flex items-center justify-between mb-4">
-            <h2 class="font-heading font-semibold text-white text-sm flex items-center gap-2">
-              <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <h2 id="heading-ats-diagnostics" class="font-heading font-semibold text-slate-900 dark:text-white text-sm flex items-center gap-2">
+              <svg class="w-4 h-4 text-emerald-500 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
               </svg>
               ATS Compatibility & Keyword Coverage
             </h2>
-            <span class="text-[11px] text-slate-400">Live Client Scoring</span>
+            <span class="text-[11px] text-slate-500 dark:text-slate-400">Live Client Scoring</span>
           </div>
 
-          <div class="flex flex-col sm:flex-row items-center gap-6">
+          <div class="flex flex-col sm:flex-row items-center gap-6" aria-live="polite">
             <!-- Circular Gauge -->
-            <div class="relative w-28 h-28 flex-shrink-0 flex items-center justify-center">
-              <svg class="w-28 h-28" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="42" stroke="rgba(255,255,255,0.06)" stroke-width="10" fill="none"></circle>
+            <div class="relative w-28 h-28 flex-shrink-0 flex items-center justify-center" role="progressbar" id="gauge-container" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="ATS Compatibility Score">
+              <svg class="w-28 h-28" viewBox="0 0 100 100" aria-hidden="true">
+                <circle cx="50" cy="50" r="42" stroke="rgba(148,163,184,0.2)" stroke-width="10" fill="none"></circle>
                 <circle id="gauge-circle" class="gauge-circle" cx="50" cy="50" r="42" stroke="#6366f1" stroke-width="10" fill="none" stroke-linecap="round" stroke-dasharray="263.89" stroke-dashoffset="263.89"></circle>
               </svg>
               <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span id="score-text" class="font-heading font-extrabold text-2xl text-white">0%</span>
-                <span class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Match</span>
+                <span id="score-text" class="font-heading font-extrabold text-2xl text-slate-900 dark:text-white">0%</span>
+                <span class="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Match</span>
               </div>
             </div>
 
             <!-- Score Diagnosis & Feedback -->
             <div class="flex-1 w-full space-y-2">
-              <p id="score-summary" class="text-xs text-slate-300 leading-relaxed font-medium">
+              <p id="score-summary" class="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
                 Add your resume and target job description to compute ATS compatibility.
               </p>
 
               <!-- Competencies Matched -->
               <div>
-                <div class="text-[11px] font-semibold text-slate-400 mb-1">Matched Core Competencies:</div>
-                <div id="matched-competencies" class="flex flex-wrap gap-1.5">
-                  <span class="text-xs text-gray-500 italic">No direct competency matches yet</span>
+                <div class="text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">Matched Core Competencies:</div>
+                <div id="matched-competencies" class="flex flex-wrap gap-1.5" aria-label="Matched Core Competencies">
+                  <span class="text-xs text-slate-400 dark:text-gray-500 italic">No direct competency matches yet</span>
                 </div>
               </div>
 
               <!-- Competencies Missing -->
               <div>
-                <div class="text-[11px] font-semibold text-slate-400 mb-1">Critical Gaps to Bridge:</div>
-                <div id="missing-competencies" class="flex flex-wrap gap-1.5">
-                  <span class="text-xs text-gray-500 italic">No gaps calculated</span>
+                <div class="text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">Critical Gaps to Bridge:</div>
+                <div id="missing-competencies" class="flex flex-wrap gap-1.5" aria-label="Critical Competency Gaps">
+                  <span class="text-xs text-slate-400 dark:text-gray-500 italic">No gaps calculated</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Extra Keywords & Action Verbs Section (Collapsible) -->
-          <div class="mt-4 pt-4 border-t border-slate-800/80 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Extra Keywords & Action Verbs Section -->
+          <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800/80 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <div class="text-[11px] font-semibold text-slate-400 mb-1.5">Job Description Missing Keywords:</div>
-              <div id="missing-keywords" class="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
-                <span class="text-xs text-gray-500 italic">None detected</span>
+              <div class="text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Job Description Missing Keywords:</div>
+              <div id="missing-keywords" class="flex flex-wrap gap-1 max-h-20 overflow-y-auto" aria-label="Missing Job Posting Keywords">
+                <span class="text-xs text-slate-400 dark:text-gray-500 italic">None detected</span>
               </div>
             </div>
             <div>
-              <div class="text-[11px] font-semibold text-slate-400 mb-1.5">Target Action Verbs Found:</div>
-              <div id="verb-badges" class="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
-                <span class="text-xs text-gray-500 italic">None detected</span>
+              <div class="text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Target Action Verbs Found:</div>
+              <div id="verb-badges" class="flex flex-wrap gap-1 max-h-20 overflow-y-auto" aria-label="Detected Action Verbs">
+                <span class="text-xs text-slate-400 dark:text-gray-500 italic">None detected</span>
               </div>
             </div>
           </div>
         </section>
 
         <!-- Tailored Document Output Section -->
-        <section class="glass-panel rounded-2xl p-5 flex-1 flex flex-col min-h-[440px]">
+        <section class="glass-panel rounded-2xl p-5 flex-1 flex flex-col min-h-[440px]" aria-labelledby="heading-output-workspace">
+          <h2 id="heading-output-workspace" class="sr-only">Tailored Document Output Workspace</h2>
           <!-- Output Card Header & Tabs -->
-          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 pb-3 mb-4">
-            <!-- Tabs -->
-            <div class="flex items-center gap-1 bg-slate-900/80 p-1 rounded-xl border border-slate-800">
-              <button type="button" data-tab="bullets" class="output-tab-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-600 text-white transition shadow">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800/80 pb-3 mb-4">
+            <!-- Tabs (Accessible Tablist) -->
+            <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-900/80 p-1 rounded-xl border border-slate-200 dark:border-slate-800" role="tablist" aria-label="Document View Formats">
+              <button type="button" role="tab" id="tab-bullets" data-tab="bullets" aria-selected="true" aria-controls="output-content" class="output-tab-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-600 text-white transition shadow">
                 Tailored Bullets & Summary
               </button>
-              <button type="button" data-tab="cover_letter" class="output-tab-btn px-3 py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-white transition">
+              <button type="button" role="tab" id="tab-cover-letter" data-tab="cover_letter" aria-selected="false" aria-controls="output-content" class="output-tab-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition">
                 AP Cover Letter
               </button>
-              <button type="button" data-tab="gap_analysis" class="output-tab-btn px-3 py-1.5 rounded-lg text-xs font-medium text-gray-400 hover:text-white transition">
+              <button type="button" role="tab" id="tab-gap-analysis" data-tab="gap_analysis" aria-selected="false" aria-controls="output-content" class="output-tab-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition">
                 Gap & Interview Prep
               </button>
             </div>
 
             <!-- Export Buttons -->
             <div class="flex items-center gap-2">
-              <button id="copy-btn" type="button" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-slate-200 hover:text-white transition">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <button id="copy-btn" type="button" aria-label="Copy generated text to clipboard" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
                 </svg>
                 <span>Copy</span>
               </button>
-              <button id="download-btn" type="button" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-slate-200 hover:text-white transition">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <button id="download-btn" type="button" aria-label="Download generated document as Markdown file" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
                 </svg>
                 <span>Download .md</span>
@@ -366,29 +404,29 @@
           <!-- Tab Content Display Area -->
           <div class="flex-1 relative flex flex-col">
             <!-- Placeholder State -->
-            <div id="output-placeholder" class="flex-1 flex flex-col items-center justify-center text-center p-8 border border-dashed border-slate-800/80 rounded-xl bg-slate-900/30">
-              <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center mb-3">
+            <div id="output-placeholder" class="flex-1 flex flex-col items-center justify-center text-center p-8 border border-dashed border-slate-300 dark:border-slate-800/80 rounded-xl bg-slate-50/50 dark:bg-slate-900/30">
+              <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-3" aria-hidden="true">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
                 </svg>
               </div>
-              <h3 class="font-heading font-medium text-slate-200 text-sm mb-1">Ready for Generation</h3>
-              <p class="text-xs text-slate-500 max-w-sm">
+              <h3 class="font-heading font-medium text-slate-800 dark:text-slate-200 text-sm mb-1">Ready for Generation</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400 max-w-sm">
                 Select your persona, provide your resume and target job description, then click "Tailor Bullets", "AP Cover Letter", or "Gap Analysis" above.
               </p>
             </div>
 
-            <!-- Loading Spinner State -->
-            <div id="output-loading" class="hidden flex-1 flex flex-col items-center justify-center text-center p-8">
-              <div class="w-10 h-10 border-3 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-4"></div>
-              <p id="loading-status-text" class="text-xs font-medium text-indigo-300 animate-pulse">
+            <!-- Loading Spinner State (Screen reader accessible) -->
+            <div id="output-loading" role="status" aria-live="polite" class="hidden flex-1 flex flex-col items-center justify-center text-center p-8">
+              <div class="w-10 h-10 border-3 border-indigo-500/20 border-t-indigo-600 dark:border-t-indigo-400 rounded-full animate-spin mb-4" aria-hidden="true"></div>
+              <p id="loading-status-text" class="text-xs font-medium text-indigo-600 dark:text-indigo-300 animate-pulse">
                 Optimizing high-impact STAR bullet points with Gemini...
               </p>
               <p class="text-[11px] text-slate-500 mt-1">Dispatched via Cloudflare Pages edge isolate</p>
             </div>
 
-            <!-- Formatted Markdown Output -->
-            <div id="output-content" class="hidden flex-1 prose-custom bg-slate-900/60 p-5 rounded-xl border border-slate-800/80 overflow-y-auto max-h-[500px]"></div>
+            <!-- Formatted Markdown Output (Accessible Tabpanel) -->
+            <div id="output-content" role="tabpanel" aria-labelledby="tab-bullets" tabindex="0" class="hidden flex-1 prose-custom bg-white/70 dark:bg-slate-900/60 p-5 rounded-xl border border-slate-200 dark:border-slate-800/80 overflow-y-auto max-h-[500px]"></div>
           </div>
         </section>
 
@@ -396,32 +434,32 @@
     </div>
   </main>
 
-  <!-- Gemini API Key Settings Modal -->
-  <div id="api-key-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-    <div class="glass-panel max-w-md w-full rounded-2xl p-6 shadow-2xl border border-slate-700">
+  <!-- Gemini API Key Settings Modal (Accessible Dialog) -->
+  <div id="api-key-modal" role="dialog" aria-modal="true" aria-labelledby="api-key-modal-title" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+    <div class="glass-panel max-w-md w-full rounded-2xl p-6 shadow-2xl border border-slate-300 dark:border-slate-700">
       <div class="flex items-center justify-between mb-4">
-        <h3 class="font-heading font-bold text-white text-base flex items-center gap-2">
-          <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <h3 id="api-key-modal-title" class="font-heading font-bold text-slate-900 dark:text-white text-base flex items-center gap-2">
+          <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
           </svg>
           Google Gemini API Key
         </h3>
-        <button id="close-modal-btn" type="button" class="text-slate-400 hover:text-white transition">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button id="close-modal-btn" type="button" aria-label="Close API settings dialog" class="text-slate-400 hover:text-slate-800 dark:hover:text-white transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
         </button>
       </div>
 
-      <p class="text-xs text-slate-300 mb-4 leading-relaxed">
-        You can configure your key globally in Cloudflare Pages settings (as <code class="text-indigo-300 font-mono">AI_API_KEY</code> or <code class="text-indigo-300 font-mono">GEMINI_API_KEY</code>), or provide your personal key here. It is kept securely in your browser's <code class="font-mono text-slate-400">localStorage</code> and never shared.
+      <p class="text-xs text-slate-600 dark:text-slate-300 mb-4 leading-relaxed">
+        Your key is already configured on Cloudflare edge servers. To use your own personal key, provide it here. It is stored securely in your browser's <code class="font-mono text-slate-600 dark:text-slate-400">localStorage</code>.
       </p>
 
       <div class="space-y-3 mb-5">
-        <label class="block text-xs font-medium text-slate-300">Gemini API Key</label>
-        <input id="api-key-input" type="password" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono" placeholder="AIzaSy..." />
-        <p class="text-[11px] text-slate-500">
-          Get a free API key at <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="text-indigo-400 hover:underline">Google AI Studio</a>.
+        <label for="api-key-input" class="block text-xs font-medium text-slate-700 dark:text-slate-300">Gemini API Key</label>
+        <input id="api-key-input" type="password" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono" placeholder="AIzaSy..." />
+        <p class="text-[11px] text-slate-500 dark:text-slate-400">
+          Get a free API key at <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="text-indigo-600 dark:text-indigo-400 hover:underline">Google AI Studio</a>.
         </p>
       </div>
 
@@ -434,150 +472,133 @@
   </div>
 
   <!-- Floating AI Career Coach Trigger Button -->
-  <button type="button" class="open-chat-trigger fixed bottom-6 left-6 z-40 flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-slate-900/90 hover:bg-slate-800 border border-indigo-500/40 hover:border-indigo-400 text-white text-xs font-semibold shadow-2xl backdrop-blur-md group transition-all duration-300 hover:scale-105 hover:shadow-indigo-500/20">
-    <span class="relative flex h-2.5 w-2.5">
+  <button type="button" aria-label="Open AI Career Coach chat" class="open-chat-trigger fixed bottom-6 left-6 z-40 flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-white/95 dark:bg-slate-900/90 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-indigo-500/40 hover:border-indigo-400 text-slate-900 dark:text-white text-xs font-semibold shadow-2xl backdrop-blur-md group transition-all duration-300 hover:scale-105 hover:shadow-indigo-500/20">
+    <span class="relative flex h-2.5 w-2.5" aria-hidden="true">
       <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
       <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
     </span>
-    <span class="text-slate-200 group-hover:text-white">Ask Career Coach</span>
-    <span class="px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 text-[10px] font-mono">AI</span>
+    <span class="text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-white">Ask Career Coach</span>
+    <span class="px-1.5 py-0.5 rounded bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 text-[10px] font-mono" aria-hidden="true">AI</span>
   </button>
 
-  <!-- Help & User Guide Modal -->
-  <div id="help-guide-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-    <div class="glass-panel max-w-3xl w-full max-h-[88vh] rounded-2xl shadow-2xl border border-slate-700 flex flex-col overflow-hidden animate-fade-in">
+  <!-- Help & User Guide Modal (Accessible Dialog) -->
+  <div id="help-guide-modal" role="dialog" aria-modal="true" aria-labelledby="help-guide-title" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+    <div class="glass-panel max-w-3xl w-full max-h-[88vh] rounded-2xl shadow-2xl border border-slate-300 dark:border-slate-700 flex flex-col overflow-hidden animate-fade-in">
       
       <!-- Modal Header -->
-      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/80">
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900/80">
         <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+          <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center" aria-hidden="true">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
             </svg>
           </div>
           <div>
-            <h3 class="font-heading font-bold text-white text-base">ResumeWatcher User Guide & Strategy Manual</h3>
-            <p class="text-xs text-slate-400">Mastering ATS optimization, strategic personas, and targeted documents</p>
+            <h3 id="help-guide-title" class="font-heading font-bold text-slate-900 dark:text-white text-base">ResumeWatcher User Guide & Strategy Manual</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Mastering ATS optimization, strategic personas, and targeted documents</p>
           </div>
         </div>
-        <button id="close-help-modal-btn" type="button" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button id="close-help-modal-btn" type="button" aria-label="Close user guide" class="text-slate-400 hover:text-slate-900 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
         </button>
       </div>
 
       <!-- Modal Body (Scrollable) -->
-      <div class="p-6 overflow-y-auto space-y-6 text-xs text-slate-300 leading-relaxed">
+      <div class="p-6 overflow-y-auto space-y-6 text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
 
         <!-- 1. The 4-Step Blueprint -->
         <section class="space-y-3">
-          <h4 class="font-heading font-semibold text-white text-sm flex items-center gap-2">
-            <span class="w-5 h-5 rounded bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-xs">1</span>
+          <h4 class="font-heading font-semibold text-slate-900 dark:text-white text-sm flex items-center gap-2">
+            <span class="w-5 h-5 rounded bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xs" aria-hidden="true">1</span>
             The 4-Step Application Blueprint
           </h4>
           <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-            <div class="bg-slate-900/70 border border-slate-800/90 rounded-xl p-3">
-              <span class="text-[10px] uppercase font-bold text-indigo-400">Step 1</span>
-              <p class="font-semibold text-white mt-1">Upload Resume</p>
-              <p class="text-[11px] text-slate-400 mt-1">Drag & drop your PDF, DOCX, or paste your comprehensive master resume.</p>
+            <div class="bg-slate-100 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800/90 rounded-xl p-3">
+              <span class="text-[10px] uppercase font-bold text-indigo-600 dark:text-indigo-400">Step 1</span>
+              <p class="font-semibold text-slate-900 dark:text-white mt-1">Upload Resume</p>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Drag & drop your PDF, DOCX, or paste your master resume text.</p>
             </div>
-            <div class="bg-slate-900/70 border border-slate-800/90 rounded-xl p-3">
-              <span class="text-[10px] uppercase font-bold text-indigo-400">Step 2</span>
-              <p class="font-semibold text-white mt-1">Pick Target Persona</p>
-              <p class="text-[11px] text-slate-400 mt-1">Select PR, Wellness Director, Sales, or build a custom profile for your domain.</p>
+            <div class="bg-slate-100 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800/90 rounded-xl p-3">
+              <span class="text-[10px] uppercase font-bold text-indigo-600 dark:text-indigo-400">Step 2</span>
+              <p class="font-semibold text-slate-900 dark:text-white mt-1">Pick Target Persona</p>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Select PR, Wellness Director, Sales, or build a custom profile.</p>
             </div>
-            <div class="bg-slate-900/70 border border-slate-800/90 rounded-xl p-3">
-              <span class="text-[10px] uppercase font-bold text-indigo-400">Step 3</span>
-              <p class="font-semibold text-white mt-1">Paste Target Job</p>
-              <p class="text-[11px] text-slate-400 mt-1">Paste the exact job posting text to trigger live ATS keyword matching.</p>
+            <div class="bg-slate-100 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800/90 rounded-xl p-3">
+              <span class="text-[10px] uppercase font-bold text-indigo-600 dark:text-indigo-400">Step 3</span>
+              <p class="font-semibold text-slate-900 dark:text-white mt-1">Paste Target Job</p>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Paste the exact job posting text to trigger live ATS keyword matching.</p>
             </div>
-            <div class="bg-slate-900/70 border border-slate-800/90 rounded-xl p-3">
-              <span class="text-[10px] uppercase font-bold text-indigo-400">Step 4</span>
-              <p class="font-semibold text-white mt-1">Tailor & Export</p>
-              <p class="text-[11px] text-slate-400 mt-1">Generate STAR bullets, an AP cover letter, or a gap analysis in one click.</p>
+            <div class="bg-slate-100 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800/90 rounded-xl p-3">
+              <span class="text-[10px] uppercase font-bold text-indigo-600 dark:text-indigo-400">Step 4</span>
+              <p class="font-semibold text-slate-900 dark:text-white mt-1">Tailor & Export</p>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Generate STAR bullets, an AP cover letter, or a gap analysis in one click.</p>
             </div>
           </div>
         </section>
 
         <!-- 2. Understanding the ATS Scoring Formula -->
-        <section class="space-y-3 bg-slate-900/50 border border-slate-800/80 rounded-xl p-4">
-          <h4 class="font-heading font-semibold text-white text-sm flex items-center gap-2">
-            <span class="w-5 h-5 rounded bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs">2</span>
+        <section class="space-y-3 bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800/80 rounded-xl p-4">
+          <h4 class="font-heading font-semibold text-slate-900 dark:text-white text-sm flex items-center gap-2">
+            <span class="w-5 h-5 rounded bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs" aria-hidden="true">2</span>
             How the Live ATS Match Gauge Works
           </h4>
           <p>
-            Enterprise ATS systems (Workday, Taleo, Greenhouse, iCIMS) rank candidates based on keyword coverage and competency density. ResumeWatcher calculates a weighted match percentage:
+            Enterprise ATS systems rank candidates based on keyword coverage and competency density. ResumeWatcher calculates a weighted match percentage:
           </p>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 my-2">
-            <div class="p-3 bg-slate-800/50 rounded-lg border border-slate-700/50">
-              <span class="text-base font-bold text-emerald-400">45%</span>
-              <p class="font-semibold text-white text-xs mt-0.5">Core Competencies</p>
-              <p class="text-[11px] text-slate-400 mt-0.5">Direct matches against high-stakes industry skills defined in the persona.</p>
+            <div class="p-3 bg-white dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700/50 shadow-xs">
+              <span class="text-base font-bold text-emerald-600 dark:text-emerald-400">45%</span>
+              <p class="font-semibold text-slate-900 dark:text-white text-xs mt-0.5">Core Competencies</p>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Direct matches against high-stakes industry skills defined in the persona.</p>
             </div>
-            <div class="p-3 bg-slate-800/50 rounded-lg border border-slate-700/50">
-              <span class="text-base font-bold text-indigo-400">40%</span>
-              <p class="font-semibold text-white text-xs mt-0.5">Job Posting Terms</p>
-              <p class="text-[11px] text-slate-400 mt-0.5">Frequency-weighted keywords extracted from the employer's exact posting.</p>
+            <div class="p-3 bg-white dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700/50 shadow-xs">
+              <span class="text-base font-bold text-indigo-600 dark:text-indigo-400">40%</span>
+              <p class="font-semibold text-slate-900 dark:text-white text-xs mt-0.5">Job Posting Terms</p>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Frequency-weighted keywords extracted from the employer's exact posting.</p>
             </div>
-            <div class="p-3 bg-slate-800/50 rounded-lg border border-slate-700/50">
-              <span class="text-base font-bold text-amber-400">15%</span>
-              <p class="font-semibold text-white text-xs mt-0.5">Action Verb Strength</p>
-              <p class="text-[11px] text-slate-400 mt-0.5">High-impact verbs that replace weak phrases like "responsible for".</p>
+            <div class="p-3 bg-white dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700/50 shadow-xs">
+              <span class="text-base font-bold text-amber-600 dark:text-amber-400">15%</span>
+              <p class="font-semibold text-slate-900 dark:text-white text-xs mt-0.5">Action Verb Strength</p>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">High-impact verbs that replace weak phrases like "responsible for".</p>
             </div>
           </div>
-          <p class="text-[11px] text-slate-400">
-            💡 <strong class="text-white">Pro-tip:</strong> Look at the <span class="text-rose-300 font-semibold">Critical Gaps to Bridge</span> tags. When you click "Tailor Bullets", Gemini naturally weaves these missing competencies into your achievement stories while preserving factual accuracy.
-          </p>
         </section>
 
         <!-- 3. The STAR Framework Masterclass -->
         <section class="space-y-3">
-          <h4 class="font-heading font-semibold text-white text-sm flex items-center gap-2">
-            <span class="w-5 h-5 rounded bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-xs">3</span>
+          <h4 class="font-heading font-semibold text-slate-900 dark:text-white text-sm flex items-center gap-2">
+            <span class="w-5 h-5 rounded bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xs" aria-hidden="true">3</span>
             STAR Methodology for Resume Bullets
           </h4>
           <p>
-            Recruiters spend an average of 6 seconds skimming a resume. Passive duty lists get rejected; outcome-driven bullet points get interviews.
+            Outcome-driven bullet points get interviews. Use the STAR structure (Situation/Task, Action, Result):
           </p>
-          <div class="space-y-2 bg-slate-900/60 p-3.5 rounded-xl border border-slate-800">
+          <div class="space-y-2 bg-slate-100 dark:bg-slate-900/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800">
             <div class="flex items-start gap-2">
-              <span class="px-1.5 py-0.5 text-[10px] rounded bg-rose-500/20 text-rose-300 font-mono flex-shrink-0">Weak Duty</span>
-              <p class="text-[11px] text-slate-400 italic">"Responsible for handling media inquiries and writing press releases during company events."</p>
+              <span class="px-1.5 py-0.5 text-[10px] rounded bg-rose-500/20 text-rose-700 dark:text-rose-300 font-mono flex-shrink-0">Weak Duty</span>
+              <p class="text-[11px] text-slate-600 dark:text-slate-400 italic">"Responsible for handling media inquiries and writing press releases during company events."</p>
             </div>
             <div class="flex items-start gap-2">
-              <span class="px-1.5 py-0.5 text-[10px] rounded bg-emerald-500/20 text-emerald-300 font-mono flex-shrink-0">STAR Rewrite</span>
-              <p class="text-[11px] text-slate-200">
-                <strong class="text-white">Formulated</strong> rapid response messaging and executive holding statements during 4 critical brand incidents (Situation/Task), <strong class="text-white">coordinating cross-functional legal briefings</strong> (Action) to <strong class="text-white">mitigate negative media coverage by 65%</strong> (Result).
+              <span class="px-1.5 py-0.5 text-[10px] rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-mono flex-shrink-0">STAR Rewrite</span>
+              <p class="text-[11px] text-slate-800 dark:text-slate-200">
+                <strong class="text-slate-900 dark:text-white">Formulated</strong> rapid response messaging and executive holding statements during 4 critical brand incidents (Situation/Task), <strong class="text-slate-900 dark:text-white">coordinating cross-functional legal briefings</strong> (Action) to <strong class="text-slate-900 dark:text-white">mitigate negative media coverage by 65%</strong> (Result).
               </p>
             </div>
           </div>
         </section>
 
-        <!-- 4. AP-Style Cover Letter Guide -->
-        <section class="space-y-2 bg-slate-900/50 border border-slate-800/80 rounded-xl p-4">
-          <h4 class="font-heading font-semibold text-white text-sm flex items-center gap-2">
-            <span class="w-5 h-5 rounded bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-xs">4</span>
-            AP-Style Cover Letter Strategy
-          </h4>
-          <ul class="space-y-1.5 list-disc pl-4 text-[11px] text-slate-300">
-            <li><strong class="text-white">No generic fluff:</strong> Eliminate clichés like "I am writing to express my eager interest in your company."</li>
-            <li><strong class="text-white">Journalistic hook:</strong> The first sentence immediately states your core capability and direct relevance to their current growth or crisis point.</li>
-            <li><strong class="text-white">The Proof Paragraph:</strong> 2 concrete achievements from your resume demonstrating measurable business value.</li>
-            <li><strong class="text-white">Forward Momentum Closing:</strong> Clear, confident call-to-action requesting a strategic discussion.</li>
-          </ul>
-        </section>
-
-        <!-- 5. Privacy & Zero-Data-Retention -->
-        <section class="space-y-1.5 pt-2 border-t border-slate-800/80 text-[11px] text-slate-400">
-          <p><strong class="text-slate-300">Privacy & Security:</strong> Your documents are parsed entirely in your browser using client-side JavaScript (<code class="text-indigo-300">pdf.js</code> and <code class="text-indigo-300">mammoth.js</code>). No resumes are ever stored on a database or saved to our servers.</p>
+        <!-- 4. Privacy & In-Browser Processing -->
+        <section class="space-y-1.5 pt-2 border-t border-slate-200 dark:border-slate-800/80 text-[11px] text-slate-500 dark:text-slate-400">
+          <p><strong class="text-slate-700 dark:text-slate-300">Privacy & Security:</strong> Your resumes are parsed 100% in your browser. No documents are stored on a persistent database.</p>
         </section>
 
       </div>
 
       <!-- Modal Footer -->
-      <div class="px-6 py-3 border-t border-slate-800 bg-slate-900/80 flex items-center justify-between">
-        <span class="text-[11px] text-slate-500">Need personal coaching? Ask the AI Coach anytime!</span>
+      <div class="px-6 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/80 flex items-center justify-between">
+        <span class="text-[11px] text-slate-500 dark:text-slate-400">Need personalized guidance? Ask the AI Coach anytime!</span>
         <button id="guide-close-bottom-btn" type="button" class="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition shadow">
           Got it, let's optimize!
         </button>
@@ -585,35 +606,35 @@
     </div>
   </div>
 
-  <!-- AI Career Coach Slide-Over Drawer -->
-  <div id="chat-backdrop" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs transition-opacity"></div>
-  <aside id="chat-drawer" class="fixed top-0 right-0 z-50 w-full sm:w-[480px] h-full bg-slate-950 border-l border-slate-800 shadow-2xl flex flex-col transform translate-x-full transition-transform duration-300 ease-out">
+  <!-- AI Career Coach Slide-Over Drawer (Accessible Dialog) -->
+  <div id="chat-backdrop" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs transition-opacity" aria-hidden="true"></div>
+  <aside id="chat-drawer" role="dialog" aria-modal="true" aria-labelledby="chat-drawer-title" class="fixed top-0 right-0 z-50 w-full sm:w-[480px] h-full bg-white dark:bg-slate-950 border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col transform translate-x-full transition-transform duration-300 ease-out">
     
     <!-- Drawer Header -->
-    <div class="px-5 py-4 border-b border-slate-800 bg-slate-900/90 flex items-center justify-between">
+    <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/90 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-emerald-400 text-white flex items-center justify-center font-bold text-xs shadow-lg shadow-indigo-500/20">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-emerald-400 text-white flex items-center justify-center font-bold text-xs shadow-lg shadow-indigo-500/20" aria-hidden="true">
           AI
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <h3 class="font-heading font-bold text-white text-sm">ResumeWatcher Copilot</h3>
-            <span class="px-1.5 py-0.5 text-[9px] rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">Online</span>
+            <h3 id="chat-drawer-title" class="font-heading font-bold text-slate-900 dark:text-white text-sm">ResumeWatcher Copilot</h3>
+            <span class="px-1.5 py-0.5 text-[9px] rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-semibold">Online</span>
           </div>
-          <p id="chat-context-badge" class="text-[11px] text-slate-400 font-mono truncate max-w-[280px]">
+          <p id="chat-context-badge" class="text-[11px] text-slate-500 dark:text-slate-400 font-mono truncate max-w-[280px]">
             Live Context Ready
           </p>
         </div>
       </div>
       
       <div class="flex items-center gap-1.5">
-        <button id="clear-chat-btn" type="button" title="Clear conversation history" class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button id="clear-chat-btn" type="button" title="Clear conversation history" aria-label="Clear chat conversation history" class="p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
           </svg>
         </button>
-        <button id="close-chat-btn" type="button" class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button id="close-chat-btn" type="button" aria-label="Close AI Career Coach drawer" class="p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
         </button>
@@ -621,39 +642,40 @@
     </div>
 
     <!-- Quick Strategy Prompts -->
-    <div class="px-4 py-2.5 bg-slate-900/50 border-b border-slate-800/80 flex items-center gap-1.5 overflow-x-auto text-[11px] scrollbar-none">
+    <div class="px-4 py-2.5 bg-slate-100/70 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800/80 flex items-center gap-1.5 overflow-x-auto text-[11px] scrollbar-none" role="group" aria-label="Quick question suggestions">
       <span class="text-slate-500 text-[10px] font-semibold uppercase tracking-wider flex-shrink-0">Ask Coach:</span>
-      <button type="button" class="chat-quick-prompt flex-shrink-0 px-2.5 py-1 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition" data-prompt="How do I increase my ATS score for this specific role?">
+      <button type="button" class="chat-quick-prompt flex-shrink-0 px-2.5 py-1 rounded-full bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 transition" data-prompt="How do I increase my ATS score for this specific role?">
         🎯 Increase ATS Score
       </button>
-      <button type="button" class="chat-quick-prompt flex-shrink-0 px-2.5 py-1 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition" data-prompt="Explain how to format my experience using the STAR method for this posting.">
+      <button type="button" class="chat-quick-prompt flex-shrink-0 px-2.5 py-1 rounded-full bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 transition" data-prompt="Explain how to format my experience using the STAR method for this posting.">
         ⭐ STAR Bullet Advice
       </button>
-      <button type="button" class="chat-quick-prompt flex-shrink-0 px-2.5 py-1 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition" data-prompt="Which persona is best suited for this job posting and why?">
+      <button type="button" class="chat-quick-prompt flex-shrink-0 px-2.5 py-1 rounded-full bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 transition" data-prompt="Which persona is best suited for this job posting and why?">
         👔 Persona Recommendation
       </button>
-      <button type="button" class="chat-quick-prompt flex-shrink-0 px-2.5 py-1 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition" data-prompt="What difficult interview questions might I be asked based on these missing keywords?">
+      <button type="button" class="chat-quick-prompt flex-shrink-0 px-2.5 py-1 rounded-full bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 transition" data-prompt="What difficult interview questions might I be asked based on these missing keywords?">
         🎙️ Interview Prep
       </button>
     </div>
 
     <!-- Chat Messages Scroll Container -->
-    <div id="chat-messages-list" class="flex-1 p-5 overflow-y-auto space-y-4">
+    <div id="chat-messages-list" role="log" aria-live="polite" class="flex-1 p-5 overflow-y-auto space-y-4">
       <!-- Injected dynamically via chat.js -->
     </div>
 
     <!-- Chat Input Bar -->
-    <div class="p-4 border-t border-slate-800 bg-slate-900/90">
+    <div class="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/90">
       <div class="relative">
-        <textarea id="chat-input" rows="2" class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-3.5 pr-12 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 resize-none font-sans" placeholder="Ask your Career Coach anything (or press Enter to send)..."></textarea>
-        <button id="send-chat-btn" type="button" class="absolute right-2.5 bottom-3.5 p-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition shadow disabled:opacity-50">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <label for="chat-input" class="sr-only">Ask your Career Coach a question</label>
+        <textarea id="chat-input" rows="2" class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl pl-3.5 pr-12 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 resize-none font-sans" placeholder="Ask your Career Coach anything (or press Enter to send)..."></textarea>
+        <button id="send-chat-btn" type="button" aria-label="Send message to Career Coach" class="absolute right-2.5 bottom-3.5 p-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition shadow disabled:opacity-50">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
           </svg>
         </button>
       </div>
       <div class="flex items-center justify-between mt-2 text-[10px] text-slate-500">
-        <span>Press <kbd class="font-mono bg-slate-800 px-1 py-0.5 rounded text-slate-400">Enter</kbd> to send, <kbd class="font-mono bg-slate-800 px-1 py-0.5 rounded text-slate-400">Shift+Enter</kbd> for newline</span>
+        <span>Press <kbd class="font-mono bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded text-slate-700 dark:text-slate-400">Enter</kbd> to send, <kbd class="font-mono bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded text-slate-700 dark:text-slate-400">Shift+Enter</kbd> for newline</span>
         <span>Powered by Gemini AI</span>
       </div>
     </div>
@@ -661,7 +683,7 @@
   </aside>
 
   <!-- Toast Notification Container -->
-  <div id="toast" class="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl border shadow-2xl transition-all duration-300 transform translate-y-4 opacity-0 pointer-events-none">
+  <div id="toast" role="status" aria-live="polite" class="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl border shadow-2xl transition-all duration-300 transform translate-y-4 opacity-0 pointer-events-none">
     <div id="toast-message" class="text-xs font-medium">Notification</div>
   </div>
 
